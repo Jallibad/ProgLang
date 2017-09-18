@@ -16,7 +16,6 @@ instance Show Lexp  where
     show (Lambda exp1 exp2) = "\\" ++ exp1 ++ "." ++ (show exp2) 
     show (Apply exp1 exp2) = "(" ++ (show exp1) ++ " " ++ (show exp2) ++ ")" 
 
-
 -- Reserved keywords in Oz
 -- P. 841 Table C.8, "Concepts, Techniques, and Models of Computer Programming", 
 -- Van Roy, Haridi
