@@ -70,20 +70,19 @@ process(Id, Priority, Tolerance, CurrTolerance, Left, Right, AP, Leader, Supervi
 				TTL == 0 -> % If probe is done send reply msg
 					%io:format("~w ~w~n",[P, Priority]),
 					OriginalSender ! {reply, LeaderBit, OTTL}, % Send a reply msg including leader bit
-					% TODO break ties by ID
-					process(Id, Priority, Tolerance, CurrTolerance, Left, Right, AP and ((Leader == was) or (Priority =< P)), Leader, Supervisor, Fd); % Become passive if the sender has a higher priority
+					process(Id, Priority, Tolerance, CurrTolerance, Left, Right, AP and ((Leader == was) or comparePriority(P,{Id,Priority})), Leader, Supervisor, Fd); % Become passive if the sender has a higher priority
 				Sender == Left -> % Otherwise forward to neighbor that didn't send the message
-					Right ! {rg, OriginalSender, self(), P, LeaderBit and ((Leader == was) or (Priority =< P)), OTTL, TTL-1},
-					process(Id, Priority, Tolerance, CurrTolerance, Left, Right, AP and ((Leader == was) or (Priority =< P)), Leader, Supervisor, Fd); % There is nothing DRY about this
+					Right ! {rg, OriginalSender, self(), P, LeaderBit and ((Leader == was) or comparePriority({Id,Priority},P)), OTTL, TTL-1},
+					process(Id, Priority, Tolerance, CurrTolerance, Left, Right, AP and ((Leader == was) or comparePriority(P,{Id,Priority})), Leader, Supervisor, Fd); % There is nothing DRY about this
 				Sender == Right ->
-					Left ! {rg, OriginalSender, self(), P, LeaderBit and ((Leader == was) or (Priority =< P)), OTTL, TTL-1},
-					process(Id, Priority, Tolerance, CurrTolerance, Left, Right, AP and ((Leader == was) or (Priority =< P)), Leader, Supervisor, Fd) % WET
+					Left ! {rg, OriginalSender, self(), P, LeaderBit and ((Leader == was) or comparePriority({Id,Priority},P)), OTTL, TTL-1},
+					process(Id, Priority, Tolerance, CurrTolerance, Left, Right, AP and ((Leader == was) or comparePriority(P,{Id,Priority})), Leader, Supervisor, Fd) % WET
 			end;
 		{reply, LeaderBit, OTTL} ->
 			if
-				LeaderBit ->
-					Left ! {rg, self(), self(), Priority, LeaderBit, OTTL*2, OTTL*2},
-					Right ! {rg, self(), self(), Priority, LeaderBit, OTTL*2, OTTL*2},
+				LeaderBit and AP ->
+					Left ! {rg, self(), self(), {Id, Priority}, LeaderBit, OTTL*2, OTTL*2},
+					Right ! {rg, self(), self(), {Id, Priority}, LeaderBit, OTTL*2, OTTL*2},
 					process(Id, Priority, Tolerance, CurrTolerance, Left, Right, AP, Leader, Supervisor, Fd);
 				true ->
 					%io:format("can't be ~w~n", [Id]),
@@ -93,8 +92,8 @@ process(Id, Priority, Tolerance, CurrTolerance, Left, Right, AP, Leader, Supervi
 			%io:format("Electing ~w~n", [Id]),
 			if
 				Leader == no ->
-					Left ! {rg, self(), self(), Priority, true, 1, 1},
-					Right ! {rg, self(), self(), Priority, true, 1, 1};
+					Left ! {rg, self(), self(), {Id, Priority}, true, 1, 1},
+					Right ! {rg, self(), self(), {Id, Priority}, true, 1, 1};
 				true ->
 					%io:format("Leader = ~w~n", [Leader]),
 					ok
@@ -104,6 +103,14 @@ process(Id, Priority, Tolerance, CurrTolerance, Left, Right, AP, Leader, Supervi
 			%io:format("ID=~w, T=~w, Tolerance=~w~n", [Id, T, Tolerance]),
 			process(Id, Priority, Tolerance, T+Tolerance, Left, Right, AP, Leader, Supervisor, Fd);
 		finish -> ok
+	end.
+
+comparePriority({ID1, P1}, {ID2, P2}) ->
+	if
+		P1 == P2 ->
+			ID1 =< ID2;
+		true ->
+			P1 =< P2
 	end.
 
 run(File) ->
