@@ -1,0 +1,7 @@
+"the rat ran 2 squares up".
+"it moved 3 squares left".
+"einstein moved 1 cell down".
+"the rat pushed the button".
+"a rodent scurried 3 squares up".
+"down einstein scurried squares 3".
+"he moved 1 cell left".
