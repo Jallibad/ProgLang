@@ -24,41 +24,14 @@ lines_to_words([H|T], [H2|T2]) :-
 	split_string(H, " ", "", H2),
 	lines_to_words(T, T2).
 
-article("a").
-article("the").
-
-subject("rat").
-subject("rodent").
-
-subject_phrase(["einstein"]).
-subject_phrase(["he"]).
-subject_phrase(["it"]).
-subject_phrase([A,S|[]]) :-
-	article(A),
-	subject(S).
-
-verb("ran").
-verb("moved").
-verb("pushed").
-verb("scurried").
-
-number_speech(N) :- number_codes(X, N), 0 < X, X < 10.
-
-object("button").
-object("cell").
-object("cells").
-object("square").
-object("squares").
-
-direction("up").
-direction("down").
-direction("left").
-direction("right").
-
-direction_object_phrase([N,O,D|[]]) :- number_speech(N), object(O), direction(D).
-
-object_phrase([A,O|[]]) :- article(A), object(O).
-
-verb_phrase([X|Y]) :- verb(X), (direction_object_phrase(Y); object_phrase(Y)).
-
-sentence(S) :- append(X,Y,S), subject_phrase(X), verb_phrase(Y).
+article --> ["a"]; ["the"].
+subject --> ["rat"]; ["rodent"].
+subject_phrase --> ["einstein"]; ["he"]; ["it"]; (article, subject).
+verb --> ["moved"]; ["pushed"]; ["ran"]; ["scurried"].
+number_speech --> ["1"]; ["2"]; ["3"]; ["4"]; ["5"]; ["6"]; ["7"]; ["8"]; ["9"].
+object --> ["button"]; ["cell"]; ["cells"]; ["square"]; ["squares"].
+direction --> ["up"]; ["down"]; ["left"]; ["right"].
+direction_object_phrase --> number_speech, object, direction.
+object_phrase --> article, object.
+verb_phrase --> verb, (direction_object_phrase; object_phrase).
+sentence --> subject_phrase, verb_phrase.
